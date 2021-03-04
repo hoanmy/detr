@@ -48,7 +48,10 @@ class SmoothedValue(object):
         if not is_dist_avail_and_initialized():
             return
         t = torch.tensor([self.count, self.total], dtype=torch.float64, device='cuda')
-        dist.barrier()
+        dist.barrier()  # Some operations are not necessary to be done in parallel or you just need one process to do some preprocessing or caching 
+                        # so that the other processes can use that data. 
+                        # a process is blocked by a barrier until all processes have encountered a barrier, 
+                        # upon which the barrier is lifted for all processes
         dist.all_reduce(t)
         t = t.tolist()
         self.count = int(t[0])
@@ -219,9 +222,13 @@ class MetricLogger(object):
                 'data: {data}'
             ])
         MB = 1024.0 * 1024.0
+        
+        # print(type(iterable)) <class 'torch.utils.data.dataloader.DataLoader'>
         for obj in iterable:
             data_time.update(time.time() - end)
-            yield obj
+            # type(obj[0]) <class 'util.misc.NestedTensor'>
+            # type(obj[1]) <class 'tuple'>
+            yield obj       # return next iterable object, large dataset
             iter_time.update(time.time() - end)
             if i % print_freq == 0 or i == len(iterable) - 1:
                 eta_seconds = iter_time.global_avg * (len(iterable) - i)
@@ -280,29 +287,6 @@ def _max_by_axis(the_list):
     return maxes
 
 
-class NestedTensor(object):
-    def __init__(self, tensors, mask: Optional[Tensor]):
-        self.tensors = tensors
-        self.mask = mask
-
-    def to(self, device):
-        # type: (Device) -> NestedTensor # noqa
-        cast_tensor = self.tensors.to(device)
-        mask = self.mask
-        if mask is not None:
-            assert mask is not None
-            cast_mask = mask.to(device)
-        else:
-            cast_mask = None
-        return NestedTensor(cast_tensor, cast_mask)
-
-    def decompose(self):
-        return self.tensors, self.mask
-
-    def __repr__(self):
-        return str(self.tensors)
-
-
 def nested_tensor_from_tensor_list(tensor_list: List[Tensor]):
     # TODO make this more general
     if tensor_list[0].ndim == 3:
@@ -327,6 +311,28 @@ def nested_tensor_from_tensor_list(tensor_list: List[Tensor]):
         raise ValueError('not supported')
     return NestedTensor(tensor, mask)
 
+
+class NestedTensor(object):
+    def __init__(self, tensors, mask: Optional[Tensor]):
+        self.tensors = tensors
+        self.mask = mask
+
+    def to(self, device):
+        # type: (Device) -> NestedTensor # noqa
+        cast_tensor = self.tensors.to(device)
+        mask = self.mask
+        if mask is not None:
+            assert mask is not None
+            cast_mask = mask.to(device)
+        else:
+            cast_mask = None
+        return NestedTensor(cast_tensor, cast_mask)
+
+    def decompose(self):
+        return self.tensors, self.mask
+
+    def __repr__(self):
+        return str(self.tensors)
 
 # _onnx_nested_tensor_from_tensor_list() is an implementation of
 # nested_tensor_from_tensor_list() that is supported by ONNX tracing.
@@ -357,7 +363,6 @@ def _onnx_nested_tensor_from_tensor_list(tensor_list: List[Tensor]) -> NestedTen
     mask = torch.stack(padded_masks)
 
     return NestedTensor(tensor, mask=mask)
-
 
 def setup_for_distributed(is_master):
     """

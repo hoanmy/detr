@@ -25,11 +25,23 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = 10
 
+    # print("====> type of dataloader") <class 'torch.utils.data.dataloader.DataLoader'>
+    print("====> data_loader batch sampler")
+    for i, batch_indices in enumerate(data_loader.batch_sampler):
+      print(f'Batch #{i} indices: ', batch_indices)
+
+    # Batch #0 indices:  [12, 10, 15, 3, 8, 14]
+    # Batch #1 indices:  [5, 9, 7, 6, 4, 11]
+    # Batch #2 indices:  [0, 1, 13, 2]
+
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
+        # print(type(samples))  <class 'util.misc.NestedTensor'>
+        # print(isinstance(samples, NestedTensor))      True
+        
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
-        outputs = model(samples)
+        outputs = model(samples)    #ValueError: not enough values to unpack (expected 6, got 5)
         loss_dict = criterion(outputs, targets)
         weight_dict = criterion.weight_dict
         losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)

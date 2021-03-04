@@ -14,6 +14,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn, Tensor
 
+from models.lambda_networks import LambdaLayer
 
 class Transformer(nn.Module):
 
@@ -128,8 +129,21 @@ class TransformerEncoderLayer(nn.Module):
 
     def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1,
                  activation="relu", normalize_before=False):
+
+
+        # layer = LambdaLayer(
+        #     dim = 32,       # channels going in
+        #     dim_out = 32,   # channels out
+        #     n = 64,         # size of the receptive window - max(height, width)
+        #     dim_k = 16,     # key dimension
+        #     heads = 4,      # number of heads, for multi-query
+        #     dim_u = 1       # 'intra-depth' dimension
+        # )
+
         super().__init__()
-        self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
+        self.self_attn = LambdaLayer(dim = 64, dim_out= 64, n = 64, heads = nhead, dim_k= 32, dim_u= 1)
+
+        # self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         # Implementation of Feedforward model
         self.linear1 = nn.Linear(d_model, dim_feedforward)
         self.dropout = nn.Dropout(dropout)
@@ -189,8 +203,13 @@ class TransformerDecoderLayer(nn.Module):
     def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1,
                  activation="relu", normalize_before=False):
         super().__init__()
-        self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
-        self.multihead_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
+
+        self.self_attn = LambdaLayer(dim = 64, dim_out= 64, n = 64, heads = nhead, dim_k= 32, dim_u= 1)
+        self.self_attn = LambdaLayer(dim = 64, dim_out= 64, n = 64, heads = nhead, dim_k= 32, dim_u= 1)
+
+        # self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
+        # self.multihead_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
+        
         # Implementation of Feedforward model
         self.linear1 = nn.Linear(d_model, dim_feedforward)
         self.dropout = nn.Dropout(dropout)

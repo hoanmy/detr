@@ -16,12 +16,14 @@ from datasets import build_dataset, get_coco_api_from_dataset
 from engine import evaluate, train_one_epoch
 from models import build_model
 
+import os
+os.environ["OMP_NUM_THREADS"] = "8"
 
 def get_args_parser():
     parser = argparse.ArgumentParser('Set transformer detector', add_help=False)
-    parser.add_argument('--lr', default=1e-4, type=float)
-    parser.add_argument('--lr_backbone', default=1e-5, type=float)
-    parser.add_argument('--batch_size', default=2, type=int)
+    parser.add_argument('--lr', default=1e-2, type=float)                   # # default=1e-4
+    parser.add_argument('--lr_backbone', default=1e-5, type=float)          # default=1e-5
+    parser.add_argument('--batch_size', default=6, type=int)                # default=2
     parser.add_argument('--weight_decay', default=1e-4, type=float)
     parser.add_argument('--epochs', default=300, type=int)
     parser.add_argument('--lr_drop', default=200, type=int)
@@ -32,7 +34,7 @@ def get_args_parser():
     parser.add_argument('--frozen_weights', type=str, default=None,
                         help="Path to the pretrained model. If set, only the mask head will be trained")
     # * Backbone
-    parser.add_argument('--backbone', default='resnet50', type=str,
+    parser.add_argument('--backbone', default='resnet101', type=str,         # default='resnet50' with max_batch_size = 6
                         help="Name of the convolutional backbone to use")
     parser.add_argument('--dilation', action='store_true',
                         help="If true, we replace stride with dilation in the last convolutional block (DC5)")
@@ -150,8 +152,9 @@ def main(args):
         sampler_val = torch.utils.data.SequentialSampler(dataset_val)
 
     batch_sampler_train = torch.utils.data.BatchSampler(
-        sampler_train, args.batch_size, drop_last=True)
+        sampler_train, args.batch_size, drop_last=False)
 
+    # NOTE: utils.collate_fn return NestedTensor
     data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,
                                    collate_fn=utils.collate_fn, num_workers=args.num_workers)
     data_loader_val = DataLoader(dataset_val, args.batch_size, sampler=sampler_val,
@@ -200,8 +203,10 @@ def main(args):
         if args.output_dir:
             checkpoint_paths = [output_dir / 'checkpoint.pth']
             # extra checkpoint before LR drop and every 100 epochs
-            if (epoch + 1) % args.lr_drop == 0 or (epoch + 1) % 100 == 0:
-                checkpoint_paths.append(output_dir / f'checkpoint{epoch:04}.pth')
+            # if (epoch + 1) % args.lr_drop == 0 or (epoch + 1) % 100 == 0:
+            if epoch % 30 == 0:
+                checkpoint_paths.append(output_dir / f'tmp_checkpoint{epoch:04}.pth')
+
             for checkpoint_path in checkpoint_paths:
                 utils.save_on_master({
                     'model': model_without_ddp.state_dict(),
@@ -210,6 +215,11 @@ def main(args):
                     'epoch': epoch,
                     'args': args,
                 }, checkpoint_path)
+                
+                if epoch % 30 == 0 and 'tmp_checkpoint' in str(checkpoint_path):
+                    torch.save(model_without_ddp, Path(str(checkpoint_path).replace("tmp_checkpoint", "full")))
+                    torch.save(model_without_ddp.state_dict(), Path(str(checkpoint_path).replace("tmp_checkpoint", "state_dict")))
+           
 
         test_stats, coco_evaluator = evaluate(
             model, criterion, postprocessors, data_loader_val, base_ds, device, args.output_dir
@@ -229,8 +239,8 @@ def main(args):
                 (output_dir / 'eval').mkdir(exist_ok=True)
                 if "bbox" in coco_evaluator.coco_eval:
                     filenames = ['latest.pth']
-                    if epoch % 50 == 0:
-                        filenames.append(f'{epoch:03}.pth')
+                    # if epoch % 50 == 0:
+                    filenames.append(f'{epoch:03}.pth')
                     for name in filenames:
                         torch.save(coco_evaluator.coco_eval["bbox"].eval,
                                    output_dir / "eval" / name)
