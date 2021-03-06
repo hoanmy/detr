@@ -166,8 +166,10 @@ class TransformerEncoderLayer(nn.Module):
                      src_key_padding_mask: Optional[Tensor] = None,
                      pos: Optional[Tensor] = None):
         q = k = self.with_pos_embed(src, pos)
-        src2 = self.self_attn(q, k, value=src, attn_mask=src_mask,
-                              key_padding_mask=src_key_padding_mask)[0]
+        # src2 = self.self_attn(q, k, value=src, attn_mask=src_mask,
+        #                       key_padding_mask=src_key_padding_mask)[0]
+        src2 = self.self_attn(src)
+
         src = src + self.dropout1(src2)
         src = self.norm1(src)
         src2 = self.linear2(self.dropout(self.activation(self.linear1(src))))
@@ -181,8 +183,10 @@ class TransformerEncoderLayer(nn.Module):
                     pos: Optional[Tensor] = None):
         src2 = self.norm1(src)
         q = k = self.with_pos_embed(src2, pos)
-        src2 = self.self_attn(q, k, value=src2, attn_mask=src_mask,
-                              key_padding_mask=src_key_padding_mask)[0]
+        # src2 = self.self_attn(q, k, value=src2, attn_mask=src_mask,
+        #                       key_padding_mask=src_key_padding_mask)[0]
+        src2 = self.self_attn(src2)
+
         src = src + self.dropout1(src2)
         src2 = self.norm2(src)
         src2 = self.linear2(self.dropout(self.activation(self.linear1(src2))))
@@ -205,7 +209,7 @@ class TransformerDecoderLayer(nn.Module):
         super().__init__()
 
         self.self_attn = LambdaLayer(dim = 64, dim_out= 64, n = 64, heads = nhead, dim_k= 32, dim_u= 1)
-        self.self_attn = LambdaLayer(dim = 64, dim_out= 64, n = 64, heads = nhead, dim_k= 32, dim_u= 1)
+        self.multihead_attn = LambdaLayer(dim = 64, dim_out= 64, n = 64, heads = nhead, dim_k= 32, dim_u= 1)
 
         # self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         # self.multihead_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
@@ -236,14 +240,16 @@ class TransformerDecoderLayer(nn.Module):
                      pos: Optional[Tensor] = None,
                      query_pos: Optional[Tensor] = None):
         q = k = self.with_pos_embed(tgt, query_pos)
-        tgt2 = self.self_attn(q, k, value=tgt, attn_mask=tgt_mask,
-                              key_padding_mask=tgt_key_padding_mask)[0]
+        # tgt2 = self.self_attn(q, k, value=tgt, attn_mask=tgt_mask,
+        #                       key_padding_mask=tgt_key_padding_mask)[0]
+        tgt2 = self.self_attn(tgt)
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)
-        tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt, query_pos),
-                                   key=self.with_pos_embed(memory, pos),
-                                   value=memory, attn_mask=memory_mask,
-                                   key_padding_mask=memory_key_padding_mask)[0]
+        # tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt, query_pos),
+        #                            key=self.with_pos_embed(memory, pos),
+        #                            value=memory, attn_mask=memory_mask,
+        #                            key_padding_mask=memory_key_padding_mask)[0]
+        tgt2 = self.multihead_attn(memory)
         tgt = tgt + self.dropout2(tgt2)
         tgt = self.norm2(tgt)
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
@@ -260,14 +266,18 @@ class TransformerDecoderLayer(nn.Module):
                     query_pos: Optional[Tensor] = None):
         tgt2 = self.norm1(tgt)
         q = k = self.with_pos_embed(tgt2, query_pos)
-        tgt2 = self.self_attn(q, k, value=tgt2, attn_mask=tgt_mask,
-                              key_padding_mask=tgt_key_padding_mask)[0]
+        # tgt2 = self.self_attn(q, k, value=tgt2, attn_mask=tgt_mask,
+        #                       key_padding_mask=tgt_key_padding_mask)[0]
+
+        tgt2 = self.self_attn(tgt2)
         tgt = tgt + self.dropout1(tgt2)
         tgt2 = self.norm2(tgt)
-        tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt2, query_pos),
-                                   key=self.with_pos_embed(memory, pos),
-                                   value=memory, attn_mask=memory_mask,
-                                   key_padding_mask=memory_key_padding_mask)[0]
+        # tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt2, query_pos),
+        #                            key=self.with_pos_embed(memory, pos),
+        #                            value=memory, attn_mask=memory_mask,
+        #                            key_padding_mask=memory_key_padding_mask)[0]
+
+        tgt2 = self.multihead_attn(memory)
         tgt = tgt + self.dropout2(tgt2)
         tgt2 = self.norm3(tgt)
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt2))))

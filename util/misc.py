@@ -273,7 +273,13 @@ def get_sha():
 
 
 def collate_fn(batch):
-    batch = list(zip(*batch))
+    """
+       batch: is a list of tuples with (example, label, length)
+             where 'example' is a tensor of arbitrary shape
+             and label/length are scalars
+    """
+    
+    batch = list(zip(*batch))       #  _, labels, lengths = zip(*data)
     batch[0] = nested_tensor_from_tensor_list(batch[0])
     return tuple(batch)
 
@@ -310,6 +316,10 @@ class NestedTensor(object):
 
 def nested_tensor_from_tensor_list(tensor_list: List[Tensor]):
     # TODO make this more general
+    # for item in tensor_list:
+    #     print(item.shape)     #  torch.Size([3, 704, 938])
+    #     print(item.ndim)      #   3
+
     if tensor_list[0].ndim == 3:
         if torchvision._is_tracing():
             # nested_tensor_from_tensor_list() does not export well to ONNX
@@ -317,10 +327,10 @@ def nested_tensor_from_tensor_list(tensor_list: List[Tensor]):
             return _onnx_nested_tensor_from_tensor_list(tensor_list)
 
         # TODO make it support different-sized images
-        max_size = _max_by_axis([list(img.shape) for img in tensor_list])
+        max_size = _max_by_axis([list(img.shape) for img in tensor_list])   # example: img.shape = torch.Size([3, 704, 938])
         # min_size = tuple(min(s) for s in zip(*[img.shape for img in tensor_list]))
         batch_shape = [len(tensor_list)] + max_size
-        b, c, h, w = batch_shape
+        b, c, h, w = batch_shape    #   [6, 3, 704, 938]
         dtype = tensor_list[0].dtype
         device = tensor_list[0].device
         tensor = torch.zeros(batch_shape, dtype=dtype, device=device)
@@ -330,6 +340,7 @@ def nested_tensor_from_tensor_list(tensor_list: List[Tensor]):
             m[: img.shape[1], :img.shape[2]] = False
     else:
         raise ValueError('not supported')
+    # tensor.shape = torch.Size([6, 3, 704, 938])
     return NestedTensor(tensor, mask)
 
 # _onnx_nested_tensor_from_tensor_list() is an implementation of

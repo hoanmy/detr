@@ -26,7 +26,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     print_freq = 10
 
     # print("====> type of dataloader") <class 'torch.utils.data.dataloader.DataLoader'>
-    print("====> data_loader batch sampler")
+    # print("====> data_loader batch sampler")
     for i, batch_indices in enumerate(data_loader.batch_sampler):
       print(f'Batch #{i} indices: ', batch_indices)
 
