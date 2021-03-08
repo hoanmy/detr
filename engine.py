@@ -38,7 +38,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         # print(type(samples))  <class 'util.misc.NestedTensor'>
         # print(isinstance(samples, NestedTensor))      True
         
-        samples = samples.to(device)
+        samples = samples.to(device) # to(device) is change shape of samples
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
         outputs = model(samples)    #ValueError: not enough values to unpack (expected 6, got 5)

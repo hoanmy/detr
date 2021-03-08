@@ -30,7 +30,9 @@ class LambdaLayer(nn.Module):
         heads = 4,      # number of heads, for multi-query
         dim_out = None, # channels out
         dim_u = 1):     # 'intra-depth' dimension
-        
+
+        # LambdaLayer(dim = 64, dim_out= 64, n = 64, heads = nhead, dim_k= 32, dim_u= 1)
+
         super().__init__()
         dim_out = default(dim_out, dim)
         self.u = dim_u # intra-depth dimension
@@ -64,7 +66,8 @@ class LambdaLayer(nn.Module):
 
         b, c, hh, ww, u, h = *x.shape, self.u, self.heads
 
-        q = self.to_q(x)
+        # Given groups=1, weight of size [256, 64, 1, 1], expected input[6, 256, 23, 29] to have 64 channels, but got 256 channels instead
+        q = self.to_q(x) 
         k = self.to_k(x)
         v = self.to_v(x)
 

@@ -1,0 +1,78 @@
+Not using distributed mode
+git:
+  sha: 028a5362d6484b92c6655ae41787609b9c094ade, status: has uncommited changes, branch: master
+
+Namespace(aux_loss=True, backbone='resnet101', batch_size=6, bbox_loss_coef=5, clip_max_norm=0.1, coco_panoptic_path=None, coco_path='dataset/small-dataset/', dataset_file='coco', dec_layers=6, device='cuda', dice_loss_coef=1, dilation=False, dim_feedforward=2048, dist_url='env://', distributed=False, dropout=0.1, enc_layers=6, eos_coef=0.1, epochs=300, eval=False, frozen_weights=None, giou_loss_coef=2, hidden_dim=256, lr=0.01, lr_backbone=1e-05, lr_drop=200, mask_loss_coef=1, masks=False, nheads=8, num_queries=100, num_workers=2, output_dir='./', position_embedding='sine', pre_norm=False, remove_difficult=False, resume='', seed=42, set_cost_bbox=5, set_cost_class=1, set_cost_giou=2, start_epoch=0, weight_decay=0.0001, world_size=1)
+number of params: 61932448
+loading annotations into memory...
+Done (t=0.00s)
+creating index...
+index created!
+loading annotations into memory...
+Done (t=0.00s)
+creating index...
+index created!
+Start training
+====> data_loader batch sampler
+Batch #0 indices:  [5, 4, 15, 14, 7, 10]
+Batch #1 indices:  [12, 1, 2, 9, 11, 3]
+Batch #2 indices:  [6, 0, 13, 8]
+=======Nested tensor from tensor list
+=======Max by axis
+[3, 704, 938]
+========> batch_shape: b, c, h, w
+[6, 3, 704, 938]
+=====> tensor after
+torch.Size([6, 3, 704, 938])
+=======Nested tensor from tensor list
+=======Max by axis
+[3, 768, 1002]
+========> batch_shape: b, c, h, w
+[6, 3, 768, 1002]
+=====> tensor after
+torch.Size([6, 3, 768, 1002])
+=======Nested tensor from tensor list
+=======Max by axis
+[3, 755, 912]
+========> batch_shape: b, c, h, w
+[4, 3, 755, 912]
+=====> tensor after
+torch.Size([4, 3, 755, 912])
+============> yeild obj
+torch.Size([6, 3, 768, 1002])
+
+========================================================================
+
+Not using distributed mode
+git:
+  sha: d1f5a26b83050d1b84a897c4df5c96ee7bca3b20, status: has uncommited changes, branch: master
+
+Namespace(aux_loss=True, backbone='resnet101', batch_size=6, bbox_loss_coef=5, clip_max_norm=0.1, coco_panoptic_path=None, coco_path='dataset/small-dataset/', dataset_file='coco', dec_layers=6, device='cuda', dice_loss_coef=1, dilation=False, dim_feedforward=2048, dist_url='env://', distributed=False, dropout=0.1, enc_layers=6, eos_coef=0.1, epochs=300, eval=False, frozen_weights=None, giou_loss_coef=2, hidden_dim=256, lr=0.01, lr_backbone=1e-05, lr_drop=200, mask_loss_coef=1, masks=False, nheads=8, num_queries=100, num_workers=2, output_dir='./', position_embedding='sine', pre_norm=False, remove_difficult=False, resume='', seed=42, set_cost_bbox=5, set_cost_class=1, set_cost_giou=2, start_epoch=0, weight_decay=0.0001, world_size=1)
+number of params: 65146048
+loading annotations into memory...
+Done (t=0.00s)
+creating index...
+index created!
+loading annotations into memory...
+Done (t=0.00s)
+creating index...
+index created!
+Start training
+Batch #0 indices:  [12, 10, 15, 3, 8, 14]
+Batch #1 indices:  [5, 9, 7, 6, 4, 11]
+Batch #2 indices:  [0, 1, 13, 2]
+=========> log every
+torch.Size([6, 3, 736, 903])
+torch.Size([6, 736, 903])
+torch.Size([6, 3, 736, 903])
+torch.Size([6, 736, 903])
+========> nested tensor to device
+torch.Size([6, 3, 736, 903])
+torch.Size([6, 3, 736, 903])
+=======> samples to device
+<class 'util.misc.NestedTensor'>
+=====> size of x: 
+<class 'torch.Tensor'>
+=====> shape of x: 
+torch.Size([6, 256, 23, 29])
+

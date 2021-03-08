@@ -299,6 +299,8 @@ class NestedTensor(object):
 
     def to(self, device):
         # type: (Device) -> NestedTensor # noqa
+        # print(self.tensors.shape) torch.Size([6, 3, 736, 903])
+        # print(cast_tensor.shape)   torch.Size([6, 3, 736, 903])
         cast_tensor = self.tensors.to(device)
         mask = self.mask
         if mask is not None:
